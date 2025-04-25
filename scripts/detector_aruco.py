@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 # Iniciar captura de video
-cap = cv2.VideoCapture(1)  # Cambia a 0, 1 o 2 según la cámara disponible
+cap = cv2.VideoCapture(0)  # Cambia a 0, 1 o 2 según la cámara disponible
 
 # Crear el diccionario y el detector de ArUco con la nueva API
 aruco_dict = aruco.getPredefinedDictionary(aruco.DICT_4X4_50)
@@ -15,7 +15,7 @@ detector = aruco.ArucoDetector(aruco_dict, parameters)
 archivo_angulos = "angulos_detectados.txt"
 
 # Limpiar archivo al inicio
-with open(archivo_angulos, "w") as f:
+with open(archivo_angulos, "w", encoding="utf-8") as f:
     f.write("ID | Ángulo 1 (p1→p2→p3) | Ángulo 2 (p2→p3→p4)\n")
     f.write("---------------------------------------------\n")
 
@@ -67,9 +67,19 @@ while True:
                 for i in range(len(centros) - 3):
                     p1, p2, p3, p4 = centros[i:i+4]
 
-                    # Dibujar líneas entre los puntos
-                    pts = np.array([p1, p2, p3, p4], np.int32).reshape((-1, 1, 2))
-                    cv2.polylines(frame, [pts], False, (255, 0, 0), 2)
+                    # Verificar alineación vertical antes de conectar
+                    def estan_alineados_verticalmente(p1, p2):
+                        return abs(p1[0] - p2[0]) < 15  # Umbral de alineación en X
+
+                    if estan_alineados_verticalmente(p1, p2):
+                        cv2.line(frame, p1, p2, (255, 0, 0), 2)
+
+                    if estan_alineados_verticalmente(p2, p3):
+                        cv2.line(frame, p2, p3, (255, 0, 0), 2)
+
+                    if estan_alineados_verticalmente(p3, p4):
+                        cv2.line(frame, p3, p4, (255, 0, 0), 2)
+
 
                     # Calcular ángulos
                     angulo1 = calcular_angulo_360(p1, p2, p3)
